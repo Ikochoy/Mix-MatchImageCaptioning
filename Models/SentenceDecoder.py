@@ -53,7 +53,7 @@ class LSTMDecoder(nn.Module):
         self.rnn = LSTMCell(input_size=hidden_size, hidden_size=hidden_size)
         self.out = nn.Linear(hidden_size, vocab_size)
 
-    def forward(self, encoder_outputs, captions):
+    def forward(self, captions):
         """
         Write forward function for the LSTM decoder for the show and tell image captioning task.
         Returns predicted captions and its probability.
@@ -63,8 +63,8 @@ class LSTMDecoder(nn.Module):
         embeddings = torch.cat((torch.zeros(embeddings.shape[0], 1, embeddings.shape[2]), embeddings), dim=1)
 
         # batch_size x seq_len x hidden_size
-        h_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
-        c_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
+        h_t = torch.zeros(captions[0], 1, self.hidden_size)
+        c_t = torch.zeros(captions[0], 1, self.hidden_size)
 
         # batch_size x seq_len x vocab_size
         logits = []
@@ -185,9 +185,6 @@ class SentenceDecoder(nn.Module):
         elif choice == 'RNN':
             self.rnn = MyRNN(vocab_size=vocab_size, hidden_size=hidden_size, device=device)
     
-    def forward(self, captions, encoder_outputs):
-        # TODO: clarification - what is encoder_ouputs?  can't we get the size from captions?
-        if self.choice == 'LSTM':
-            return self.rnn.forward(captions=captions, encoder_outputs=encoder_outputs)
-        elif self.choice == 'RNN':
-            return self.rnn.forward(captions=captions)
+    def forward(self, captions):
+
+        return self.rnn.forward(captions=captions)
