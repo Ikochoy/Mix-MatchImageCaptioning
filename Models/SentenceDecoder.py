@@ -53,7 +53,7 @@ class LSTMDecoder(nn.Module):
         self.rnn = LSTMCell(input_size=hidden_size, hidden_size=hidden_size)
         self.out = nn.Linear(hidden_size, vocab_size)
 
-    def forward(self, captions):
+    def forward(self, encoder_outputs, captions):
         """
         Write forward function for the LSTM decoder for the show and tell image captioning task.
         Returns predicted captions and its probability.
@@ -63,8 +63,8 @@ class LSTMDecoder(nn.Module):
         embeddings = torch.cat((torch.zeros(embeddings.shape[0], 1, embeddings.shape[2]), embeddings), dim=1)
 
         # batch_size x seq_len x hidden_size
-        h_t = torch.zeros(captions[0], 1, self.hidden_size)
-        c_t = torch.zeros(captions[0], 1, self.hidden_size)
+        h_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
+        c_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
 
         # batch_size x seq_len x vocab_size
         logits = []
@@ -120,20 +120,20 @@ class MyRNNCell(nn.Module):
 
 
 class MyRNN(nn.Module):
-    def __init__(self, vocab_size, hidden_size, CNN_last_layer, device):
+    def __init__(self, vocab_size, hidden_size, CNN_last_layer_size, device):
         """Initialize RNN."""
         super().__init__()
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
-        self.cnn_last_layer = CNN_last_layer
+        self.cnn_last_layer_size = CNN_last_layer_size
 
-        self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer.shape[0])  # TODO: Double check if the last layer size is correct
+        self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size.shape[0])  # TODO: Double check if the last layer size is correct
 
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         self.device = device
 
 
-    def forward(self, captions):
+    def forward(self, captions, encoder_outputs):
         """
         Write forward function for the RNN decoder for the Karpathy & Li Fei-Fei paper.
 
@@ -159,15 +159,9 @@ class MyRNN(nn.Module):
         hidden = torch.zeros(batch_size, self.hidden_size, device=self.device)
 
         for i in range(seq_len):
-            # h_0 is the 0 vector
-            # x_1 is a special START vector
-            # y_1 is the first word in the sequence
-            # x_2 is the first word in the sequence
-            # x_t is the last last word in the sequence
-            # y_t is a special END vector
 
             # For each iteration, compute RNN on input for current position
-            output, hidden = self.rnn_cell(embeddings[:, i, :], hidden, self.cnn_last_layer, i)
+            output, hidden = self.rnn_cell(x=embeddings[:, i, :], h_t_prev=hidden, CNN_last_layer=encoder_outputs, t=i)
 
             output_arr[:, i, :] = output
             hidden_arr[:, i, :] = hidden
@@ -176,15 +170,15 @@ class MyRNN(nn.Module):
 
 
 class SentenceDecoder(nn.Module):
-    def __init__(self, choice, vocab_size, hidden_size, device):
+    def __init__(self, choice, vocab_size, hidden_size, device, CNN_last_layer_size):
         self.choice = choice
         self.device = device
 
         if choice == 'LSTM':
             self.rnn = LSTMDecoder(vocab_size=vocab_size, hidden_size=hidden_size)
         elif choice == 'RNN':
-            self.rnn = MyRNN(vocab_size=vocab_size, hidden_size=hidden_size, device=device)
+            self.rnn = MyRNN(vocab_size=vocab_size, hidden_size=hidden_size, CNN_last_layer=CNN_last_layer_size, device=device)
     
-    def forward(self, captions):
+    def forward(self, captions, encoder_outputs):
 
-        return self.rnn.forward(captions=captions)
+        return self.rnn.forward(captions=captions, encoder_outputs=encoder_outputs)
