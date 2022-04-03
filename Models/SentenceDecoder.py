@@ -1,3 +1,5 @@
+import torch.nn as nn
+
 class LSTMCell(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(LSTMCell, self).__init__()
@@ -17,6 +19,8 @@ class LSTMCell(nn.Module):
         self.Wcx = nn.Linear(input_size, hidden_size)
         self.Wcm = nn.Linear(hidden_size, hidden_size)
 
+        self.probabilities = []
+
     def forward(self, x, m_prev, c_prev):
         """Forward pass of the LSTM computation for one time step.
 
@@ -34,8 +38,7 @@ class LSTMCell(nn.Module):
         o_t = torch.sigmoid(self.Wox(x) + self.Wom(m_prev))
         c_new = f_t * c_prev + i_t * torch.tanh(self.Wcx(x) + self.Wcm(m_prev))
         m_new = o_t * c_new
-        p_new = torch.softmax(m_new)
-        return m_new, c_new, p_new
+        return m_new, c_new
 
 
 class LSTMDecoder(nn.Module):
@@ -48,36 +51,34 @@ class LSTMDecoder(nn.Module):
         self.rnn = LSTMCell(input_size=hidden_size, hidden_size=hidden_size)
         self.out = nn.Linear(hidden_size, vocab_size)
 
-    def forward(self, inputs, annotations, hidden_init):
-        """Forward pass of the non-attentional decoder RNN.
-
-        Arguments:
-            inputs: Input token indexes across a batch. (batch_size x seq_len)
-            annotations: This is not used here. It just maintains consistency with the
-                    interface used by the AttentionDecoder class.
-            hidden_init: The hidden states from the last step of encoder, across a batch. (batch_size x hidden_size)
-
-        Returns:
-            output: Un-normalized scores for each token in the vocabulary, across a batch for all the decoding time steps. (batch_size x decoder_seq_len x vocab_size)
-            None
+    def forward(self, encoder_outputs, captions):
         """
-        batch_size, seq_len = inputs.size()
-        embed = self.embedding(inputs)  # batch_size x seq_len x hidden_size
-
-        hiddens = []
-        h_prev = hidden_init
-
-        for i in range(seq_len):
-            x = embed[
-                :, i, :
-            ]  # Get the current time step input tokens, across the whole batch
-            h_prev = self.rnn(x, h_prev)  # batch_size x hidden_size
-            hiddens.append(h_prev)
-
-        hiddens = torch.stack(hiddens, dim=1)  # batch_size x seq_len x hidden_size
-
-        output = self.out(hiddens)  # batch_size x seq_len x vocab_size
-        return output, None
+        Write forward function for the LSTM decoder for the show and tell image captioning task.
+        Returns predicted captions and its probability.
+        """
+        # batch_size x seq_len x hidden_size
+        embeddings = self.embedding(captions)
+        embeddings = torch.cat((torch.zeros(embeddings.shape[0], 1, embeddings.shape[2]), embeddings), dim=1)
+        # batch_size x seq_len x hidden_size
+        h_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
+        c_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
+        # batch_size x seq_len x vocab_size
+        logits = []
+        captions = []
+        caption_probs = []
+        for i in range(embeddings.shape[1]):
+            h_t, c_t, p_t = self.rnn(embeddings[:, i, :], h_t, c_t)
+            logit = self.out(h_t)
+            logits.append(logit)
+            # get the max probability caption
+            pred_cap_probs, pred_cap_index = torch.max(logit, dim=1)
+            captions.append(pred_cap_index)
+            caption_probs.append(pred_cap_probs)
+        logits = torch.stack(logits, dim=1)
+        captions = torch.stack(captions, dim=1)
+        caption_probs = torch.stack(caption_probs, dim=1)
+        return logits, caption_probs, captions
+        
 
 
 class MyRNNCell(nn.Module):
@@ -169,3 +170,16 @@ class MyRNN(nn.Module):
         training for the initial state. Personally, I don't know if it matters!
         """
         return torch.zeros(batch_size, self.hidden_size, device=device)
+
+
+class SentenceDecoder(nn.Module):
+    def __init__(self, choice, vocab_size, hidden_size):
+        if choice == 'LSTM':
+            self.rnn = LSTMDecoder(vocab_size=vocab_size, hidden_size=hidden_size)
+        elif choice == 'RNN':
+            # not sure what obs_dim should be
+            self.rnn = MyRNN(obs_dim=obs_dim, hidden_size=hidden_size, output_dim=vocab_size)
+    
+    def forward(self, captions, encoder_outputs):
+        return self.rnn.forward(captions=captions, encoder_outputs=encoder_outputs)
+        
