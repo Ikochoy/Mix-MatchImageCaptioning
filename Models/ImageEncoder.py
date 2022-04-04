@@ -5,7 +5,7 @@ from torchvision import transforms
 
 
 class ImageEncoder(nn.Module):
-  def __init__(self, choice, dropout=False):
+  def __init__(self, choice, dropout=False, fine_tune=False):
     super(ImageEncoder, self).__init__()
     self.input = CROPPED_WIDTH
     # Detect if we have a GPU available
@@ -25,20 +25,31 @@ class ImageEncoder(nn.Module):
       # GoogLeNet
       self.model_name = "GoogLeNet_Inception_v3"
       model_ft = models.inception_v3(pretrained=True)
-      self.model = model_ft.to(self.device)
-
+     
     elif choice == "AlexNet":
       self.model_name = "AlexNet"
       model_ft = models.alexnet(pretrained=True)
-      self.model = model_ft.to(self.device)
 
     elif choice == "VGG-19":
       self.model_name = "VGG-19"
       model_ft = torch.hub.load('pytorch/vision:v0.10.0', 'vgg19', pretrained=True)
-      self.model = model_ft.to(self.device)
-    
+      
+    self.model = model_ft.to(self.device)  
+    layers = list(self.model.to(self.device).children())[:-2]
+    self.model = nn.Sequential(*layers)
+
+
+    # Freeze parameters so we don't backprop through them
     for param in self.model.parameters():
-            param.requires_grad = False
+        param.requires_grad = False
+    # Fine tune the last layers
+    if fine_tune:
+      for layer in list(self.model.children())[-2:]:
+        for param in layer.parameters():
+          param.requires_grad = True
+      
+  
+    
   
   def forward(self, X):
     # think about the ensemble and dropout a bit more
