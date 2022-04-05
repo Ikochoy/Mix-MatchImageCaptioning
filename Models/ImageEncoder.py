@@ -30,24 +30,27 @@ class ImageEncoder(nn.Module):
       layers = list(self.model.to(self.device).children())[:-2]
       self.model = nn.Sequential(*layers)
 
-     
     elif choice == "AlexNet":
       self.model_name = "AlexNet"
       model_ft = models.alexnet(pretrained=True)
       self.model = model_ft.to(self.device)  
       # remove classifier layer
-      layers = list(self.model.to(self.device).children())[:-1]
-      self.model = nn.Sequential(*layers)
-
+      net = list(model_ft.children())[-1]
+      net_layers = list(net.children())[:-2]
+      net = nn.Sequential(*net_layers)
+      model_layers = list(model_ft.children())[:-1] + [net]
+      self.model = nn.Sequential(*model_layers)
 
     elif choice == "VGG-19":
       self.model_name = "VGG-19"
       model_ft = torch.hub.load('pytorch/vision:v0.10.0', 'vgg19', pretrained=True)
       self.model = model_ft.to(self.device)  
       # remove classifier layer
-      layers = list(self.model.to(self.device).children())[:-1]
-      self.model = nn.Sequential(*layers)
-      
+      net = list(model_ft.children())[-1]
+      net_layers = list(net.children())[:-2]
+      net = nn.Sequential(*net_layers)
+      model_layers = list(model_ft.children())[:-1] + [net]
+      self.model = nn.Sequential(*model_layers)
     
 
     # Freeze parameters so we don't backprop through them
