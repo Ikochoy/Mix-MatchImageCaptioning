@@ -17,12 +17,17 @@ class Flickr8Dataset(Dataset):
     captions_file: flickr dataset location/captions.txt
     '''
     def __init__(self, root_dir, captions_file,
-                 transform=T.Compose([T.Resize((224,224)),T.ToTensor()]),
+                 transform=T.Compose([]),
                  freq_threshold=5):
 
         self.root_dir = root_dir
         self.df = pd.read_csv(captions_file)
-        self.transform = transform
+        self.transform = None #transform
+
+        #Transform
+        #T.Resize((224, 224)), T.ToTensor()
+
+        #We will use the transformations done in the ImageEncoder
 
         self.imgs = self.df["image"]
         self.captions = self.df["caption"]

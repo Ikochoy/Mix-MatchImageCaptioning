@@ -1,3 +1,9 @@
+import torch.nn as nn
+import numpy as np
+import torch
+import torchvision.transform as transform
+
+
 class ImageEncoder:
   def __init__(self, choice):
     # TODO: Define feature_extract
@@ -20,7 +26,7 @@ class ImageEncoder:
       # Handle the primary net
       num_ftrs = model_ft.fc.in_features
       model_ft.fc = nn.Linear(num_ftrs,num_classes)
-      
+
       self.transform = transforms.Compose([
           transforms.Resize(224),
           transforms.CenterCrop(224),
@@ -46,7 +52,7 @@ class ImageEncoder:
     models = [self.model for _ in range(num_models)]
     fmodel, params, buffers = combine_state_for_ensemble(models)
     self.ensemble = [fmodel, params, buffers]
-  
+
   def train_and_val_model(self,num_epochs, trainloader, validloader, lr=0.001, momentum=0.9, loss="CE"):
     """https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html"""
     save_file_name = f"{self.model_name}_{num_epochs}_{lr}_{momentum}"
@@ -144,7 +150,7 @@ class ImageEncoder:
     # self.model = model
     self.trained = True
     return self.model, outputs_losses, outputs_acc
-  
+
   def forward(self, images, num_models, dropout=False, ensemble=False):
     # think about the ensemble and dropout a bit more
     if ensemble and self.ensemble == None:
