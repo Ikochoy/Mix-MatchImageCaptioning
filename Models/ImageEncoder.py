@@ -25,19 +25,30 @@ class ImageEncoder(nn.Module):
       # GoogLeNet
       self.model_name = "GoogLeNet_Inception_v3"
       model_ft = models.inception_v3(pretrained=True)
+      self.model = model_ft.to(self.device)  
+      # remove the dropout + linear classifier layer
+      layers = list(self.model.to(self.device).children())[:-2]
+      self.model = nn.Sequential(*layers)
+
      
     elif choice == "AlexNet":
       self.model_name = "AlexNet"
       model_ft = models.alexnet(pretrained=True)
+      self.model = model_ft.to(self.device)  
+      # remove classifier layer
+      layers = list(self.model.to(self.device).children())[:-1]
+      self.model = nn.Sequential(*layers)
+
 
     elif choice == "VGG-19":
       self.model_name = "VGG-19"
       model_ft = torch.hub.load('pytorch/vision:v0.10.0', 'vgg19', pretrained=True)
+      self.model = model_ft.to(self.device)  
+      # remove classifier layer
+      layers = list(self.model.to(self.device).children())[:-1]
+      self.model = nn.Sequential(*layers)
       
-    self.model = model_ft.to(self.device)  
-    layers = list(self.model.to(self.device).children())[:-2]
-    self.model = nn.Sequential(*layers)
-
+    
 
     # Freeze parameters so we don't backprop through them
     for param in self.model.parameters():
