@@ -1,4 +1,6 @@
 import torch.nn as nn
+
+import numpy as np
 import torchvision.models as models 
 import torch
 from torchvision import transforms
@@ -38,18 +40,7 @@ class ImageEncoder(nn.Module):
     layers = list(self.model.to(self.device).children())[:-2]
     self.model = nn.Sequential(*layers)
 
-
-    # Freeze parameters so we don't backprop through them
-    for param in self.model.parameters():
-        param.requires_grad = False
-    # Fine tune the last layers
-    if fine_tune:
-      for layer in list(self.model.children())[-2:]:
-        for param in layer.parameters():
-          param.requires_grad = True
-      
-  
-    
+        
   
   def forward(self, X):
     # think about the ensemble and dropout a bit more
