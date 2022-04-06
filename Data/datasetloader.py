@@ -5,7 +5,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
-import torchvision.transform as T
+import torchvision.transforms as T
 from .vocab import Vocabulary
 import os
 from PIL import Image
