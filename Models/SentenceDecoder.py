@@ -127,7 +127,7 @@ class MyRNN(nn.Module):
         self.hidden_size = hidden_size
         self.cnn_last_layer_size = CNN_last_layer_size
 
-        self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size.shape[0])  # TODO: Double check if the last layer size is correct
+        self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size)  # TODO: Double check if the last layer size is correct
 
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         self.device = device
