@@ -4,7 +4,7 @@ import spacy
 from Preproc import AnnotationCleaner
 
 
-spacy_eng = spacy.load("en")
+spacy_eng = spacy.load("en_core_web_sm")
 
 
 class Vocabulary:
