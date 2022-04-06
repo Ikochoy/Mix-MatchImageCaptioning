@@ -14,6 +14,7 @@ class LSTMDecoder(nn.Module):
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         # https://pytorch.org/docs/stable/generated/torch.nn.LSTM.html
         self.rnn = nn.LSTM(hidden_size, hidden_size, num_layers=1, batch_first=True, bidirectional=False)
+
         self.out = nn.Linear(hidden_size, vocab_size)
         self.dropout = nn.Dropout(p=0.5)
 
@@ -24,6 +25,7 @@ class LSTMDecoder(nn.Module):
         """
         embeddings = self.embedding(captions)
         max_captions_length = captions.shape[-1]
+
         # # batch_size x seq_len x hidden_size
         h_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
         c_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
@@ -32,19 +34,25 @@ class LSTMDecoder(nn.Module):
         logits = []
         captions = []
         caption_probs = []
+
         for i in range(max_captions_length-1):
             embeddings_i = embeddings[:, i, :]
             inputs = torch.cat((encoder_outputs, embeddings_i), dim=1)
+
             h_t, c_t = self.rnn(inputs, (h_t, c_t))
+
             logit = self.out(h_t).squeeze(1)
             logits.append(logit)
+
             # get the max probability caption
             pred_cap_probs, pred_cap_index = torch.max(logit, dim=1)
             captions.append(pred_cap_index)
             caption_probs.append(pred_cap_probs)
+
         logits = torch.stack(logits, dim=1)
         captions = torch.stack(captions, dim=1)
         caption_probs = torch.stack(caption_probs, dim=1)
+
         return logits, caption_probs, captions
 
 
