@@ -1,6 +1,7 @@
 #define Vocabulary class
 from collections import Counter
 import spacy
+from Preproc import AnnotationCleaner
 
 
 spacy_eng = spacy.load("en")
@@ -29,8 +30,14 @@ class Vocabulary:
         frequencies = Counter()
         idx = 4
 
-        for sentence in sentence_list:
-            for word in self.tokenize(sentence):
+        #Preproc captions
+        cleaned = AnnotationCleaner(sentence_list)
+
+
+        #Tokenize captions + build vocab
+        for sentence in cleaned:
+            tokenized = self.tokenize(sentence)
+            for word in tokenized:
                 frequencies[word] += 1
 
                 # add the word to the vocab if it reaches minum frequecy threshold
@@ -38,6 +45,7 @@ class Vocabulary:
                     self.stoi[word] = idx
                     self.itos[idx] = word
                     idx += 1
+
 
     def numericalize(self, text):
         """ For each word in the text corresponding index token for that word form the vocab built as list """
