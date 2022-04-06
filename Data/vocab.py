@@ -2,9 +2,8 @@
 from collections import Counter
 import spacy
 from Preproc import AnnotationCleaner
+from transformers import BertTokenizer
 
-
-spacy_eng = spacy.load("en")
 
 
 class Vocabulary:
@@ -18,13 +17,23 @@ class Vocabulary:
         self.stoi = {v: k for k, v in self.itos.items()}
 
         self.freq_threshold = freq_threshold
+        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+
 
     def __len__(self):
         return len(self.itos)
 
-    @staticmethod
-    def tokenize(text):
-        return [token.text.lower() for token in spacy_eng.tokenizer(text)]
+    def tokenize(self,text):
+        tokenized_inputs = self.tokenizer(
+            text,  # Input text
+            add_special_tokens=True,  # add '[CLS]' and '[SEP]'
+            padding='max_length',  # pad to a length specified by the max_length
+            max_length=280,
+            # truncate all sentences longer than max_length -- max # of characters in Twitter
+            return_tensors='pt',  # return everything we need as PyTorch tensors
+        )
+        return tokenized_inputs['input_ids']
+
 
     def build_vocab(self, sentence_list):
         frequencies = Counter()
