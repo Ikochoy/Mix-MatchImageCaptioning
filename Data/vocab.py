@@ -4,8 +4,6 @@ import spacy
 from Preproc import AnnotationCleaner
 from transformers import BertTokenizer
 
-
-
 class Vocabulary:
 
     def __init__(self, freq_threshold):
