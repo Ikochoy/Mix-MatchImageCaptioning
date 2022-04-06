@@ -2,7 +2,6 @@
 from collections import Counter
 import spacy
 from Preproc import AnnotationCleaner
-from Preproc.EmbedAnnotation import GloveEmbedder
 
 
 spacy_eng = spacy.load("en")
@@ -19,8 +18,6 @@ class Vocabulary:
         self.stoi = {v: k for k, v in self.itos.items()}
 
         self.freq_threshold = freq_threshold
-        self.glove = GloveEmbedder(dim=1)
-        self.embeddings = None
 
     def __len__(self):
         return len(self.itos)
@@ -28,10 +25,6 @@ class Vocabulary:
     @staticmethod
     def tokenize(text):
         return [token.text.lower() for token in spacy_eng.tokenizer(text)]
-
-
-    def embedding(self, text):
-        return self.glove.get_embedding(text)
 
     def build_vocab(self, sentence_list):
         frequencies = Counter()
@@ -53,9 +46,6 @@ class Vocabulary:
                     self.itos[idx] = word
                     idx += 1
 
-        #returns word embeddings
-        self.embeddings = self.embedding(self.stoi)
-        return self.embeddings
 
     def numericalize(self, text):
         """ For each word in the text corresponding index token for that word form the vocab built as list """
