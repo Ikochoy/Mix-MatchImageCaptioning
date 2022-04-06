@@ -1,6 +1,5 @@
 #define Vocabulary class
 from collections import Counter
-import spacy
 from Preproc import AnnotationCleaner
 from transformers import BertTokenizer
 
