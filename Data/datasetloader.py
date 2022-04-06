@@ -11,7 +11,7 @@ import os
 from PIL import Image
 
 
-class Flickr8Dataset(Dataset):
+class Flickr8kDataset(Dataset):
     '''
     root_dir: flickr dataset folder/Images
     captions_file: flickr dataset location/captions.txt
