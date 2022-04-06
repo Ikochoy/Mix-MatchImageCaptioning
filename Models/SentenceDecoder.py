@@ -1,46 +1,8 @@
+from json import encoder
+from unicodedata import bidirectional
 import torch.nn as nn
 import torch
 
-
-class LSTMCell(nn.Module):
-    def __init__(self, input_size, hidden_size):
-        super(LSTMCell, self).__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.Wix = nn.Linear(input_size, hidden_size)
-        self.Wim = nn.Linear(hidden_size, hidden_size)
-
-        self.Wfx = nn.Linear(input_size, hidden_size)
-        self.Wfm = nn.Linear(hidden_size, hidden_size)
-
-        self.Wox = nn.Linear(input_size, hidden_size)
-        self.Wom = nn.Linear(hidden_size, hidden_size)
-
-        self.Wcx = nn.Linear(input_size, hidden_size)
-        self.Wcm = nn.Linear(hidden_size, hidden_size)
-
-        self.probabilities = []
-
-    def forward(self, x, m_prev, c_prev):
-        """Forward pass of the LSTM computation for one time step.
-
-        Arguments
-            x: batch_size x input_size
-            h_prev: batch_size x hidden_size
-            c_prev: batch_size x hidden_size
-
-        Returns:
-            h_new: batch_size x hidden_size
-            c_new: batch_size x hidden_size
-        """
-        i_t = torch.sigmoid(self.Wix(x) + self.Wim(m_prev))
-        f_t = torch.sigmoid(self.Wfx(x) + self.Wfm(m_prev))
-        o_t = torch.sigmoid(self.Wox(x) + self.Wom(m_prev))
-        c_new = f_t * c_prev + i_t * torch.tanh(self.Wcx(x) + self.Wcm(m_prev))
-        m_new = o_t * c_new
-        return m_new, c_new
 
 
 class LSTMDecoder(nn.Module):
@@ -50,19 +12,21 @@ class LSTMDecoder(nn.Module):
         self.hidden_size = hidden_size
 
         self.embedding = nn.Embedding(vocab_size, hidden_size)
-        self.rnn = LSTMCell(input_size=hidden_size, hidden_size=hidden_size)
+        # https://pytorch.org/docs/stable/generated/torch.nn.LSTM.html
+        self.rnn = nn.LSTM(hidden_size, hidden_size, num_layers=1, batch_first=True, bidirectional=False)
+
         self.out = nn.Linear(hidden_size, vocab_size)
+        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, encoder_outputs, captions):
         """
         Write forward function for the LSTM decoder for the show and tell image captioning task.
         Returns predicted captions and its probability.
         """
-        # batch_size x seq_len x hidden_size
         embeddings = self.embedding(captions)
-        embeddings = torch.cat((torch.zeros(embeddings.shape[0], 1, embeddings.shape[2]), embeddings), dim=1)
+        max_captions_length = captions.shape[-1]
 
-        # batch_size x seq_len x hidden_size
+        # # batch_size x seq_len x hidden_size
         h_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
         c_t = torch.zeros(encoder_outputs.shape[0], 1, self.hidden_size)
 
@@ -71,9 +35,13 @@ class LSTMDecoder(nn.Module):
         captions = []
         caption_probs = []
 
-        for i in range(embeddings.shape[1]):
-            h_t, c_t, p_t = self.rnn(embeddings[:, i, :], h_t, c_t)
-            logit = self.out(h_t)
+        for i in range(max_captions_length-1):
+            embeddings_i = embeddings[:, i, :]
+            inputs = torch.cat((encoder_outputs, embeddings_i), dim=1)
+
+            h_t, c_t = self.rnn(inputs, (h_t, c_t))
+
+            logit = self.out(h_t).squeeze(1)
             logits.append(logit)
 
             # get the max probability caption
@@ -127,7 +95,7 @@ class MyRNN(nn.Module):
         self.hidden_size = hidden_size
         self.cnn_last_layer_size = CNN_last_layer_size
 
-        self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size.shape[0])  # TODO: Double check if the last layer size is correct
+        self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size)  # TODO: Double check if the last layer size is correct
 
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         self.device = device
