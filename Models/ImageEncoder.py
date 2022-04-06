@@ -1,4 +1,6 @@
 import torch.nn as nn
+
+import numpy as np
 import torchvision.models as models 
 import torch
 from torchvision import transforms
@@ -44,6 +46,7 @@ class ImageEncoder(nn.Module):
     elif choice == "VGG-19":
       self.model_name = "VGG-19"
       model_ft = torch.hub.load('pytorch/vision:v0.10.0', 'vgg19', pretrained=True)
+
       self.model = model_ft.to(self.device)  
       # remove classifier layer
       net = list(model_ft.children())[-1]
@@ -62,8 +65,7 @@ class ImageEncoder(nn.Module):
         for param in layer.parameters():
           param.requires_grad = True
       
-  
-    
+
   
   def forward(self, X):
     # think about the ensemble and dropout a bit more
