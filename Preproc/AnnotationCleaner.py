@@ -2,10 +2,6 @@ import re
 class AnnotationCleaner:
     def __init__(self, annotations):
         self.annotations = annotations
-        self.clean_annotations = []
-        for annotation in self.annotations:
-            self.clean_annotations.append(self.run(annotation))
-        return self.clean_annotations
 
     def removePunctuation(self, annotation):
         # remove the punctuations
@@ -24,4 +20,10 @@ class AnnotationCleaner:
         output = self.lower(annotation)
         output = self.removeExtraSpace(annotation)
         return output
+
+    def get_cleaned(self):
+      cleaned = []
+      for annotation in self.annotations:
+        cleaned.append(self.run(annotation))
+      return cleaned
 

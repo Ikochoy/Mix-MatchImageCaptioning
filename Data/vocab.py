@@ -1,7 +1,7 @@
 #define Vocabulary class
 from collections import Counter
 import spacy
-from Preproc import AnnotationCleaner
+from Preproc.AnnotationCleaner import AnnotationCleaner
 from transformers import BertTokenizer
 
 class Vocabulary:
@@ -38,7 +38,7 @@ class Vocabulary:
         idx = 4
 
         #Preproc captions
-        cleaned = AnnotationCleaner(sentence_list)
+        cleaned = AnnotationCleaner(sentence_list).get_cleaned()
 
 
         #Tokenize captions + build vocab
