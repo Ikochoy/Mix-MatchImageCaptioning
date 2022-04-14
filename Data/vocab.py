@@ -1,12 +1,13 @@
 #define Vocabulary class
 from collections import Counter
-import spacy
+import sys
+sys.path.insert(0, '../')
 from Preproc.AnnotationCleaner import AnnotationCleaner
 from transformers import BertTokenizer
 
 class Vocabulary:
 
-    def __init__(self, freq_threshold):
+    def __init__(self, freq_threshold=100):
         # setting the pre-reserved tokens int to string tokens
         self.itos = {0: "<PAD>", 1: "<SOS>", 2: "<EOS>", 3: "<UNK>"}
 
@@ -38,12 +39,15 @@ class Vocabulary:
         idx = 4
 
         #Preproc captions
-        cleaned = AnnotationCleaner(sentence_list).get_cleaned()
+        cleaned = AnnotationCleaner(sentence_list).clean()
+
+        done = []
 
 
         #Tokenize captions + build vocab
         for sentence in cleaned:
             tokenized = self.tokenize(sentence)
+            done.append(tokenized)
             for word in tokenized:
                 frequencies[word] += 1
 
@@ -52,10 +56,15 @@ class Vocabulary:
                     self.stoi[word] = idx
                     self.itos[idx] = word
                     idx += 1
-
+        return done
 
     def numericalize(self, text):
         """ For each word in the text corresponding index token for that word form the vocab built as list """
         tokenized_text = self.tokenize(text)
         return [self.stoi[token] if token in self.stoi else self.stoi["<UNK>"]
                 for token in tokenized_text]
+
+
+
+# v = Vocabulary()
+# print(v.build_vocab(["hello world"]))

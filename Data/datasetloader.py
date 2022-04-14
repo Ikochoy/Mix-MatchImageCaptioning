@@ -5,13 +5,14 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
-import torchvision.transforms as T
 from .vocab import Vocabulary
 import os
 from PIL import Image
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 
-class Flickr8Dataset(Dataset):
+class Flickr8kDataset(Dataset):
     '''
     root_dir: flickr dataset folder/Images
     captions_file: flickr dataset location/captions.txt
@@ -22,12 +23,23 @@ class Flickr8Dataset(Dataset):
 
         self.root_dir = root_dir
         self.df = pd.read_csv(captions_file)
-        self.transform = None #transform
-
-        #Transform
-        #T.Resize((224, 224)), T.ToTensor()
-
-        #We will use the transformations done in the ImageEncoder
+        self.transform = A.Compose(
+            [
+                A.Resize(224),
+                A.CenterCrop(224),
+                A.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]
+                ),
+                ToTensorV2(),
+            ],
+        )
+        # self.transform = transforms.Compose([
+        #   transforms.Resize(224),
+        #   transforms.CenterCrop(224),
+        #   transforms.ToTensor(),
+        #   transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        # ])
 
         self.imgs = self.df["image"]
         self.captions = self.df["caption"]
