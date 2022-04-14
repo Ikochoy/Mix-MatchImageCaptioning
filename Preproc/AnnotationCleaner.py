@@ -27,3 +27,9 @@ class AnnotationCleaner:
         output = self.removeExtraSpace(annotation)
         return output
 
+    def get_cleaned(self):
+      cleaned = []
+      for annotation in self.annotations:
+        cleaned.append(self.run(annotation))
+      return cleaned
+
