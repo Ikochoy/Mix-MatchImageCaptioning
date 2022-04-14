@@ -8,9 +8,9 @@ import pandas as pd
 from .vocab import Vocabulary
 import os
 from PIL import Image
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
-
+# import albumentations as A
+# from albumentations.pytorch import ToTensorV2
+import torchvision.transforms as transforms
 
 class Flickr8kDataset(Dataset):
     '''
@@ -23,23 +23,23 @@ class Flickr8kDataset(Dataset):
 
         self.root_dir = root_dir
         self.df = pd.read_csv(captions_file)
-        self.transform = A.Compose(
-            [
-                A.Resize(224),
-                A.CenterCrop(224),
-                A.Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225]
-                ),
-                ToTensorV2(),
-            ],
-        )
-        # self.transform = transforms.Compose([
-        #   transforms.Resize(224),
-        #   transforms.CenterCrop(224),
-        #   transforms.ToTensor(),
-        #   transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        # ])
+        # self.transform = A.Compose(
+        #     [
+        #         A.Resize(224),
+        #         A.CenterCrop(224),
+        #         A.Normalize(
+        #             mean=[0.485, 0.456, 0.406],
+        #             std=[0.229, 0.224, 0.225]
+        #         ),
+        #         ToTensorV2(),
+        #     ],
+        # )
+        self.transform = transforms.Compose([
+          transforms.Resize(224),
+          transforms.CenterCrop(224),
+          transforms.ToTensor(),
+          transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
 
         self.imgs = self.df["image"]
         self.captions = self.df["caption"]
