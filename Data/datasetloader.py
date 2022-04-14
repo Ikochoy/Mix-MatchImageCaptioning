@@ -18,7 +18,7 @@ class Flickr8kDataset(Dataset):
     captions_file: flickr dataset location/captions.txt
     '''
     def __init__(self, root_dir, captions_file,
-                 transform=T.Compose([]),
+                 transform=transforms.Compose([]),
                  freq_threshold=5):
 
         self.root_dir = root_dir
