@@ -63,7 +63,7 @@ class MyRNNCell(nn.Module):
 
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
-        
+
         self.Whi = nn.Linear(cnn_last_layer_shape, hidden_size)  # Last layer of CNN dimensions
         self.Whx = nn.Linear(vocab_size, hidden_size)
         self.Whh = nn.Linear(hidden_size, hidden_size)
@@ -94,6 +94,7 @@ class MyRNN(nn.Module):
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
         self.cnn_last_layer_size = CNN_last_layer_size
+
 
         self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size)  # TODO: Double check if the last layer size is correct
 
@@ -137,6 +138,7 @@ class MyRNN(nn.Module):
 
 
 class SentenceDecoder(nn.Module):
+
     def __init__(self, choice, vocab_size, hidden_size):
         self.choice = choice
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -144,6 +146,7 @@ class SentenceDecoder(nn.Module):
         if choice == 'LSTM':
             self.rnn = LSTMDecoder(vocab_size=vocab_size, hidden_size=hidden_size)
         elif choice == 'RNN':
+
             self.rnn = MyRNN(vocab_size=vocab_size, hidden_size=hidden_size, CNN_last_layer=4096, device=device)
     
     def forward(self, encoder_outputs, captions):
