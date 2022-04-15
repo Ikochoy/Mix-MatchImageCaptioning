@@ -95,6 +95,7 @@ class MyRNN(nn.Module):
         self.hidden_size = hidden_size
         self.cnn_last_layer_size = CNN_last_layer_size
 
+
         self.rnn_cell = MyRNNCell(vocab_size, hidden_size, CNN_last_layer_size)  # TODO: Double check if the last layer size is correct
 
         self.embedding = nn.Embedding(vocab_size, hidden_size)
@@ -104,7 +105,6 @@ class MyRNN(nn.Module):
     def forward(self, captions, encoder_outputs):
         """
         Write forward function for the RNN decoder for the Karpathy & Li Fei-Fei paper.
-
         Returns the predicted word sequence and the hidden state sequence.
         """
         # batch_size x seq_len x hidden_size
@@ -138,15 +138,24 @@ class MyRNN(nn.Module):
 
 
 class SentenceDecoder(nn.Module):
-    def __init__(self, choice, vocab_size, hidden_size, device, CNN_last_layer_size):
+
+    def __init__(self, choice, vocab_size, hidden_size):
         self.choice = choice
-        self.device = device
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         if choice == 'LSTM':
             self.rnn = LSTMDecoder(vocab_size=vocab_size, hidden_size=hidden_size)
         elif choice == 'RNN':
-            self.rnn = MyRNN(vocab_size=vocab_size, hidden_size=hidden_size, CNN_last_layer=CNN_last_layer_size, device=device)
-    
-    def forward(self, captions, encoder_outputs):
 
+            self.rnn = MyRNN(vocab_size=vocab_size, hidden_size=hidden_size, CNN_last_layer=4096, device=device)
+    
+    def forward(self, encoder_outputs, captions):
         return self.rnn.forward(captions=captions, encoder_outputs=encoder_outputs)
+
+    def teacher_forcing(self, features, captions):
+        embeddings = self.rnn.embedding(captions)
+        embeddings = torch.cat((features.unsqueeze(1), embeddings), 1)
+        rnn_output = self.rnn(embeddings)[0]
+        rnn_output = rnn_output[:,1:,:]
+        outputs = self.out(rnn_output)
+        return outputs
