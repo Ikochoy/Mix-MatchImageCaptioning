@@ -11,6 +11,7 @@ from PIL import Image
 # import albumentations as A
 # from albumentations.pytorch import ToTensorV2
 import torchvision.transforms as transforms
+from Preproc.AnnotationCleaner import AnnotationCleaner
 
 class Flickr8kDataset(Dataset):
     '''
@@ -45,7 +46,7 @@ class Flickr8kDataset(Dataset):
         self.captions = self.df["caption"]
 
         self.vocab = Vocabulary(freq_threshold)
-        self.vocab.build_vocab(self.captions.to_list())
+        self.vocab.build_vocab(self.captions.to_list(), verbose=False)
 
 
     def __len__(self):
@@ -63,12 +64,15 @@ class Flickr8kDataset(Dataset):
             img = self.transform(img)
 
         # numericalize the caption text
+        caption = AnnotationCleaner([caption]).clean()
         caption_vec = []
         caption_vec += [self.vocab.stoi["<SOS>"]]
-        caption_vec += self.vocab.numericalize(caption)
+        caption_vec += self.vocab.numericalize(caption[0])
         caption_vec += [self.vocab.stoi["<EOS>"]]
 
         #returns image at index idx + corresponding caption
+        # print(f"Caption: {caption}")
+
         return img, torch.tensor(caption_vec)
 
 

@@ -7,7 +7,7 @@ from transformers import BertTokenizer
 
 class Vocabulary:
 
-    def __init__(self, freq_threshold=100):
+    def __init__(self, freq_threshold=2):
         # setting the pre-reserved tokens int to string tokens
         self.itos = {0: "<PAD>", 1: "<SOS>", 2: "<EOS>", 3: "<UNK>"}
 
@@ -34,7 +34,9 @@ class Vocabulary:
         return tokenized_inputs['input_ids']
 
 
-    def build_vocab(self, sentence_list):
+    def build_vocab(self, sentence_list, verbose=False):
+        # Verbose for debugging purposes
+
         frequencies = Counter()
         idx = 4
 
@@ -46,9 +48,18 @@ class Vocabulary:
 
         #Tokenize captions + build vocab
         for sentence in cleaned:
+
             tokenized = self.tokenize(sentence)
+
+            if verbose:
+                print(sentence)
+                # print(len(tokenized))
+                # print(tokenized)
+                print(self.tokenizer.decode(tokenized[0]))
+
             done.append(tokenized)
-            for word in tokenized:
+            for word in tokenized[0]:
+                word = word.item()
                 frequencies[word] += 1
 
                 # add the word to the vocab if it reaches minum frequecy threshold
@@ -56,13 +67,26 @@ class Vocabulary:
                     self.stoi[word] = idx
                     self.itos[idx] = word
                     idx += 1
+
+        if verbose:
+            print(self.stoi)
+            print(self.itos)
         return done
 
     def numericalize(self, text):
         """ For each word in the text corresponding index token for that word form the vocab built as list """
         tokenized_text = self.tokenize(text)
-        return [self.stoi[token] if token in self.stoi else self.stoi["<UNK>"]
-                for token in tokenized_text]
+
+        result = []
+        for token in tokenized_text[0]:
+            token = token.item()
+            if token in self.stoi.keys() and token != 0:  # token != 0 takes care of the padding that we do
+                result.append(self.stoi[token])
+            else:
+                result.append(self.stoi["<UNK>"])
+
+        # return [self.stoi[token.item()] if token in self.stoi else self.stoi["<UNK>"] for token in tokenized_text[0]]
+        return result
 
 
 
