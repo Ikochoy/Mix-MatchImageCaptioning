@@ -11,3 +11,15 @@ in caption generation. We apply these modified models to the Flickr8k dataset
 and compare our models’ performances using BLEU-1, BLEU-2, BLEU-3, and
 BLEU-4 scores. We find that AlexNet outperforms VGG-19 and Inception V3
 when trained with a lower learning rate.
+
+To train the models: 
+1. Clone this repository  
+2. Modify the following at the top of train.py to your preferences: \
+  `ENCODER_CHOICE`: Choice of InceptionV3, AlexNet, and VGG\
+  `LOAD_MODEL`: set to True if you want to load a model that has already been partially trained\
+  `TRAIN_CNN`: True or False. If False, only fine-tune. If True, train the full CNN\
+  `DEVICE`: GPU or CPU\
+   hyperparameters: `EMBED_SIZE`. `HIDDEN_SIZE`, `NUM_LAYERS`, `LEARNING_RATE`, `NUM_EPOCHS`, `BATCH_SIZE`, `NUM_WORKERS`
+3. Run train.py 
+
+Read our project report [here](ProjectReport.pdf). 
