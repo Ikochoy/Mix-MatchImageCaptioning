@@ -1,45 +1,16 @@
-import requests
-
-def download_image(path, image_url, image_id):
-  response = requests.get(image_url)
-  img = response.content
-  if f'{image_id}.jpg' not in os.listdir(path):
-      with open(path + "/" + f'{image_id}' + '.jpg', 'wb') as handler:
-        handler.write(img)
+import torch
+import torchvision.transforms as transforms
+from PIL import Image
 
 
-def load_images_to_dir(path, imageset):
-  # load images concurrently
-  with concurrent.futures.ThreadPoolExecutor(
-        max_workers=8
-    ) as executor:
-        future_to_url = {
-            executor.submit(download_image, path, image.file_name, image_id): image.file_name
-            for image_id, image in imageset.images.items()
-        }
-        for future in tqdm(concurrent.futures.as_completed(
-            future_to_url
-        )):
-            url = future_to_url[future]
-            try:
-                future.result()
-            except Exception as exc:
-                print(
-                    "%r generated an exception: %s" % (url, exc)
-                )
+def save_checkpoint(state, output_folder, filename="my_checkpoint.pth.tar"):
+    print("=> Saving checkpoint")
+    torch.save(state, f"{output_folder}{filename}")
 
 
-def get_intermediate_dict(data):
-  result = {}
-  for annotation in data["annotations"]:
-    image_id = annotation["image_id"]
-    if image_id in result:
-      result[image_id].add_annotation(annotation["caption"])
-    else:
-      result[image_id] = Image(image_id, [annotation["caption"]])
-  for image in data["images"]:
-    if image['id'] not in result:
-      continue
-    else:
-      result[image['id']].file_name = image['flickr_url']
-  return result
+def load_checkpoint(checkpoint, model, optimizer):
+    print("=> Loading checkpoint")
+    model.load_state_dict(checkpoint["state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
+    step = checkpoint["step"]
+    return step
